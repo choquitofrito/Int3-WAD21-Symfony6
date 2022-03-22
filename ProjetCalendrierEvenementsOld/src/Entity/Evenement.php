@@ -15,18 +15,15 @@ class Evenement
 
     #[ORM\Column(type: 'string', length: 255)]
     private $title;
-    
 
     #[ORM\Column(type: 'date')]
     private $start;
 
-
-    #[ORM\Column(type: 'date', nullable: true, name:'end_date')]
+    #[ORM\Column(type: 'date', nullable: true)]
     private $end;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private $description;
-
 
     #[ORM\Column(type: 'boolean', nullable: true)]
     private $all_day;
