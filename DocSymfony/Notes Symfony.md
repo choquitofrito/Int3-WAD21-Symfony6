@@ -105,10 +105,11 @@
   - [16.2. Class Table Inheritance](#162-class-table-inheritance)
 - [17. Fixtures pour remplir la BD](#17-fixtures-pour-remplir-la-bd)
   - [17.1. Fixtures multi-entity et ordre d'exécution](#171-fixtures-multi-entity-et-ordre-dexécution)
-  - [17.2. Fixtures basées sur un fichier .sql](#172-fixtures-basées-sur-un-fichier-sql)
-  - [17.3. Exclure de tableaux dans le purge](#173-exclure-de-tableaux-dans-le-purge)
+  - [17.2. Fixtures dans un Many-to-Many décomposé en deux One-To-Many](#172-fixtures-dans-un-many-to-many-décomposé-en-deux-one-to-many)
+  - [17.3. Fixtures basées sur un fichier .sql](#173-fixtures-basées-sur-un-fichier-sql)
+  - [17.4. Exclure de tableaux dans le purge](#174-exclure-de-tableaux-dans-le-purge)
     - [Exercices :](#exercices-)
-  - [17.4. Fichier de reinitialisation de la BD et les fixtures, migration](#174-fichier-de-reinitialisation-de-la-bd-et-les-fixtures-migration)
+  - [17.5. Fichier de reinitialisation de la BD et les fixtures, migration](#175-fichier-de-reinitialisation-de-la-bd-et-les-fixtures-migration)
 - [18. Accès à la BD avec DQL](#18-accès-à-la-bd-avec-dql)
   - [18.1. SELECT](#181-select)
     - [18.1.1. Requête qui renvoi un array d'arrays](#1811-requête-qui-renvoi-un-array-darrays)
@@ -4822,7 +4823,132 @@ class AeroportAutreFixtures extends Fixture implements DependentFixtureInterface
 
 <br>
 
-## 17.2. Fixtures basées sur un fichier .sql
+
+
+
+## 17.2. Fixtures dans un Many-to-Many décomposé en deux One-To-Many 
+
+On considére ici le cas de la relation Many-To-Many **Commande<->Produit**, décomposée en  deux One-To-Many **Commande<->DetailCommande<->Produit** (exemple classique du cours d'UML)
+
+
+**ProduitFixtures**
+```php
+<?php
+
+namespace App\DataFixtures;
+
+use App\Entity\Produit;
+use Doctrine\Persistence\ObjectManager;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+
+class ProduitFixtures extends Fixture
+{
+    public function load(ObjectManager $manager): void
+    {
+        for ($i = 1; $i <= 100; $i++) {
+            $produit = new Produit();
+            $produit
+                ->setNom('Produit ' . $i)
+                ->setDescription('la description')
+                ->setPrix(mt_rand(20, 400))
+                ->setLien ("p" . rand(1,3) . ".jpg");
+
+            $manager->persist($produit);
+        }
+        $manager->flush();
+
+    }
+}
+```
+
+
+**CommandeFixtures**
+```php
+<?php
+
+namespace App\DataFixtures;
+
+use DateTime;
+use App\Entity\Commande;
+use Doctrine\Persistence\ObjectManager;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+
+class CommandeFixtures extends Fixture
+{
+    public function load(ObjectManager $manager): void
+    {
+        for ($i = 1; $i <= 20; $i++) {
+            $commande = new Commande();
+            $commande
+            ->setDateCreation(new DateTime())
+            ->setDateModification(new DateTime());
+
+
+            $manager->persist($commande);
+        }
+        $manager->flush();
+
+    }
+}
+```
+
+**DetailCommandeFixtures**
+
+```php
+<?php
+
+namespace App\DataFixtures;
+
+use DateTime;
+use App\Entity\Produit;
+use App\Entity\Commande;
+use App\Entity\DetailCommande;
+use Doctrine\Persistence\ObjectManager;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
+
+class DetailCommandeFixtures extends Fixture implements DependentFixtureInterface
+{
+    public function load(ObjectManager $manager): void
+    {
+
+        // on obtient tous les commandes. Pour chaque Evenement on fixera un User random
+        $rep = $manager->getRepository(Commande::class);
+        $commandes = $rep->findAll();
+
+        $rep = $manager->getRepository(Produit::class);
+        $produits = $rep->findAll();
+
+        // créer des DetailsCommande
+        for ($i = 0; $i < 50; $i++) {
+            // affecter un commande random et un produit random
+            $commandeChoisie = $commandes[rand(0, count($commandes) - 1)];
+            $produitChoisi = $produits[rand(0, count($produits) - 1)];
+
+            $detailCommande = new DetailCommande();
+            $detailCommande->setProduit($produitChoisi);
+            $detailCommande->setCommande($commandeChoisie);
+            $detailCommande->setQuantite(rand(5, 20));
+            
+            $commandeChoisie->addDetail($detailCommande);
+            $produitChoisi->addDetail($detailCommande);
+
+            $manager->persist($detailCommande);
+        }
+        $manager->flush();
+    }
+
+    public function getDependencies()
+    {
+        return ([
+            ProduitFixtures::class,
+            CommandeFixtures::class
+        ]);
+    }
+}
+```
+
+## 17.3. Fixtures basées sur un fichier .sql
 
 <br>
 
@@ -4883,7 +5009,7 @@ class CustomFixtures extends Fixture implements ContainerAwareInterface
 ```
 <br>
 
-## 17.3. Exclure de tableaux dans le purge
+## 17.4. Exclure de tableaux dans le purge
 
 <br>
 
@@ -4906,7 +5032,7 @@ Dans ce cas, matable et autretable ne seront pas purgées.
 <br>
 
 
-## 17.4. Fichier de reinitialisation de la BD et les fixtures, migration
+## 17.5. Fichier de reinitialisation de la BD et les fixtures, migration
 
 Vous pouvez lancez un fichier migration.bat pour vous simplifier la ré-création de la BD et lancer les fixtures.
 Le fichier se trouve dans le dossier de la doc, copiez-le dans la racine de votre projet.
