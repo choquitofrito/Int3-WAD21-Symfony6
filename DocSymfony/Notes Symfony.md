@@ -41,7 +41,7 @@
   - [6.7. Héritage de Templates en TWIG (II)](#67-héritage-de-templates-en-twig-ii)
     - [Exercices : création de Master Pages](#exercices--création-de-master-pages-1)
   - [6.8. Vider un bloc hérité d'un template](#68-vider-un-bloc-hérité-dun-template)
-  - [6.9. Incruster le rendu d'une autre action du controller une vue ('vue partielle')](#69-incruster-le-rendu-dune-autre-action-du-controller-une-vue-vue-partielle)
+  - [6.9. Incruster le rendu d'une autre action du controller dans une vue ('vue partielle')](#69-incruster-le-rendu-dune-autre-action-du-controller-dans-une-vue-vue-partielle)
     - [Exercices : incruster une action du controller dans une section de la vue](#exercices--incruster-une-action-du-controller-dans-une-section-de-la-vue)
   - [6.10. Faire appel à une action depuis la vue](#610-faire-appel-à-une-action-depuis-la-vue)
     - [Exercices: création de liens dans la vue (vers des actions)](#exercices-création-de-liens-dans-la-vue-vers-des-actions)
@@ -2021,7 +2021,7 @@ Et le block sera vide. Si on ne mentionne pas le block, il sera hérité de la m
 
 <br>
 
-## 6.9. Incruster le rendu d'une autre action du controller une vue ('vue partielle')
+## 6.9. Incruster le rendu d'une autre action du controller dans une vue ('vue partielle')
 
 <br>
 
