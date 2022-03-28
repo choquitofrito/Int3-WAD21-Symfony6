@@ -4518,6 +4518,8 @@ class AuteurH extends PersonneH {...}
 class ClientH extends PersonneH {...}
 ```
 
+**Important:** Effacez les id's dans les classes filles car elles héritent l'id de la classe parent
+
 
 3)  **Rajoutez les annotations** **InheritanceType,DiscriminatorColumn** et **DiscriminatorMap** à la classe **parent**
 
