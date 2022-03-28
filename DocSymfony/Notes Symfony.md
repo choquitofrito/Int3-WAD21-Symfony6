@@ -1156,7 +1156,7 @@ Les principaux avantages de TWIG sont :
 
 5.  On peut utiliser un squelette twig **avec d'autres langages de programmation** (ex : python)
 
-Quand on lance la méthode **render** depuis un controller, Symfony parcourt le fichier **.twig** correspondant et génére un objet **Response** à partir de ce fichier. Cet objet génère le HTML+JS qui sera renvoyé au serveur.
+Quand on lance la méthode **render** depuis un controller, Symfony parcourt le fichier **.twig** correspondant et génère un objet **Response** à partir de ce fichier. Cet objet génère le HTML+JS qui sera renvoyé au serveur.
 
 Attention : les fichiers .twig utilisent la notation snake case. Ex: Le template pour une action mangeonsDuChocolat sera un fichier portant le
 nom mangeons_du_chocolat.html.twig
@@ -5908,7 +5908,7 @@ On peut rendre le formulaire complète ou morceaux, en utilisant un thème (Boot
 {{ form_end (unFormulaire)}}
 ```
 
-**form_start** et **form_end** générent les **balises** du début et fin du formulaire et **form_widget** génère tous les contrôles d'un coup. 
+**form_start** et **form_end** générent les **balises** du début et fin du formulaire et **form_widget (nomFormulaire)** génère tous les contrôles d'un coup. 
 
 Il nous manque le **submit**, on le verra dans les sections suivantes.
 
@@ -6083,34 +6083,55 @@ Cette méthode nous permet de re-utiliser le formulaire pour plein d'actions dan
 <br>
 
 
-Au moment de générer un formulaire dans un fichier twig on peut utiliser
-:
+Au moment de générer un formulaire dans un fichier twig on peut utiliser:
+
 
 ```twig
 {{ form (nomDuFormulaire) }}
 ```
 
-Pour rendre la totalité du formulaire d'un coup. Mais on peut
-controller plus la génération du formulaire en utilisant :
+Ceci fera le reundu de la totalité du formulaire en utilisant une seule ligne de code. Mais on peut
+avoir plus de contrôle sur la génération du formulaire en utilisant les méthodes: 
+
+**form_widget (formulaire.nomChamp)** : génère un champ sans libellé
+**form_row (formulaire.nomChamp)** : génère un champ et le libellé
+
+Voir en détail ici: 
+
+https://symfony.com/doc/current/form/form_customization.html
+
+Avant de générer les champs du formulaire on doit rendre la balise de début du formulaire (y inclus l'action et le méthod):
 
 ```twig
 {{ form_start (nomDuFormulaire) }}
 ```
 
-Pour rendre la balise de début du formulaire, y compris l'attribut enctype correct lors de l'utilisation des téléchargements de fichiers.
+    Note: form_start crée aussi l'attribut enctype correct lors de l'utilisation des téléchargements de fichiers.
+
+Puis on peut commencer à générer des champs : 
 
 ```twig
-{{ form_widget (nomChampFormulaire) }}
+{{ form_widget (nomDuFormulaire.nomChamp1) }}
+{{ form_widget (nomDuFormulaire.nomChamp2) }}
+.
+.
 ```
 
-Pour rendre un champ, ce qui inclut: l'élément du champ lui-même, une étiquette et tous les messages d'erreur de validation pour le champ (si on a défini de validations, pas pour le moment)
+ou
+
+```twig
+{{ form_row (nomDuFormulaire.nomChamp1) }}
+{{ form_row (nomDuFormulaire.nomChamp2) }}
+.
+.
+```
+
+Puis on utilise form_end (formulaire) pour rendre l'étiquette de fin du formulaire et tous les champs qui n'ont pas encore été rendus, dans le cas où vous avez rendu chaque champ vous-même. Ceci est utile pour ne pas devoir rendre à la main les champs cachés.
+
 
 ```twig
 {{ form_end (nomDuFormulaire) }}
 ```
-Pour rendre l'étiquette de fin du formulaire et tous les champs qui n'ont pas encore été rendus, dans le cas où vous avez rendu chaque champ
-vous-même. Ceci est utile pour ne pas devoir rendre à la main les champs
-cachés.
 
 <br>
 
@@ -6123,14 +6144,28 @@ cachés.
 {{ form_end (formulaireAeroport) }}
 ```
 
-**Si vous ne voulez pas afficher un champ d'un formulaire c'est
-simple** : effacez la ligne **form_widget** qui correspond à ce champ. Le controller recevra alors une valeur **null** pour ce champ de l'entité associée. 
+**Si vous ne voulez pas afficher un champ d'un formulaire, c'est très simple** : effacez la ligne **form_widget** qui correspond à ce champ. Le controller recevra alors une valeur **null** pour ce champ de l'entité associée. 
 
-Par défaut Symfony rend les champs qui ne sont pas spécifies Pour éviter le rendu automatique du reste de champs il faut rajouter :
+Par défaut Symfony rend les champs qui ne sont pas spécifies Pour **éviter le rendu automatique du reste de champs il faut rajouter**
 
 ```twig
 {{ form_end(nomDuFormulaire, {'render_rest': false}) }}
 ```
+
+avant form_end.
+
+**ATTENTION**: si vous générez un formulaire qui contient un token (CSRF) de façon partielle (ex: les formulaires de **login**), vous êtes obligés de générer le champ pour ce token. Voici un exemple:
+
+
+```twig
+{{ form_start (formLogin) }}
+{{ form_row (formLogin.email) }}
+{{ form_row (formLogin.password) }}
+{{ form_row (formLogin._token) }}
+{{ form_end (formLogin) }}
+```
+
+
 
 <br>
 
@@ -6420,7 +6455,7 @@ public function rajouterLivre(Request $req, ManagerRegistry $doctrine)
 
 ## 21.8. Exemple de traitement avec CRUD - UPDATE
 
-Nous avons une action qui génére une liste de Livres. Quand on clique sur un Livre on verra les détails du Livre sous la forme d'un form. On peut éditer le form et les données seront stockées.
+Nous avons une action qui génère une liste de Livres. Quand on clique sur un Livre on verra les détails du Livre sous la forme d'un form. On peut éditer le form et les données seront stockées.
 
 1. D'abord on fait l'action qui affiche tous les livres:
 
