@@ -27,11 +27,11 @@
 Vous allez avoir deux remotes: un dans github et l'autre dans heroku (la version hebergée que vous allez mettre online)
 
 
-**6**. Créez un fichier Procfile (sans extension) dans la racine de votre projet contenant ce code :
+**6**. Créez un fichier **Procfile** (sans extension) dans la racine de votre projet contenant ce code :
 
         web: heroku-php-apache2 public/
 
-Ce fichier indique à Heroku d'utiliser Apache et cherche la page index.php dans le dossier **public** (la structure de Symfony)
+Ce fichier indique à Heroku d'utiliser Apache et cherche la page index.php dans le dossier **public** dans la racine (la structure de votre projet Symfony!). Autrement on aurait une erreur 404 car le serveur cherche par défaut dans la racine.
 
 **7**. Rajoutez le fichier au repo et faites **commit**
    

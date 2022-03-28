@@ -29,28 +29,28 @@ class PanierController extends AbstractController
     // type 1: rajouter une seule unité
     // on crée une commande, mais elle est vide au départ
     // Quand on passera la commande on fera le persist
-    #[Route('/panier/add/{id}', name: 'panier_add_produit')]
-    public function addProduitEntities(
-        Request $req,
-        SessionInterface $session,
-        ProduitRepository $repProduit
-    ): Response {
-        $id = $req->get('id'); // id du produit à rajouter
+    // #[Route('/panier/add/{id}', name: 'panier_add_produit')]
+    // public function addProduitEntities(
+    //     Request $req,
+    //     SessionInterface $session,
+    //     ProduitRepository $repProduit
+    // ): Response {
+    //     $id = $req->get('id'); // id du produit à rajouter
 
 
-        $panierCommande = $session->get('panierCommande', new Commande()); // si la variable 'panier' n'existe pas, on initialise l'array
+    //     $panierCommande = $session->get('panierCommande', new Commande()); // si la variable 'panier' n'existe pas, on initialise l'array
 
 
 
-        $detail = new DetailCommande();
-        $detail->setProduit($repProduit->find($id));
-        $detail->setQuantite(1); // ou plus (reçu en paramètre tel que l'id), si vous mettez un champ pour choisir la quantité dans l'interface
+    //     $detail = new DetailCommande();
+    //     $detail->setProduit($repProduit->find($id));
+    //     $detail->setQuantite(1); // ou plus (reçu en paramètre tel que l'id), si vous mettez un champ pour choisir la quantité dans l'interface
 
-        $panierCommande->addDetail($detail);  // regardez le code de addDetail       
+    //     $panierCommande->addDetail($detail);  // regardez le code de addDetail       
 
-        $session->set('panierCommande', $panierCommande);
-        return $this->redirectToRoute('panier_afficher');
-    }
+    //     $session->set('panierCommande', $panierCommande);
+    //     return $this->redirectToRoute('panier_afficher');
+    // }
 
 
     // version panier avec des entités.
