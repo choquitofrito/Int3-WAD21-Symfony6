@@ -135,10 +135,11 @@
   - [21.6. Résumé de la création et personnalisation de base d'un formulaire](#216-résumé-de-la-création-et-personnalisation-de-base-dun-formulaire)
   - [21.7. Traitement des données du formulaire](#217-traitement-des-données-du-formulaire)
     - [Exercice :](#exercice--1)
-  - [21.8. Bonnes pratiques pour créer de formulaires en Symfony](#218-bonnes-pratiques-pour-créer-de-formulaires-en-symfony)
-  - [21.9. Style de base pour les formulaires (opt - on va utiliser Webpack)](#219-style-de-base-pour-les-formulaires-opt---on-va-utiliser-webpack)
-  - [21.10. Formulaires concernant plusieurs entités](#2110-formulaires-concernant-plusieurs-entités)
-  - [21.11. (à faire encore, on le laisse pour plus tard) Formulaire contenant une liste déroulante d'entités filtrées](#2111-à-faire-encore-on-le-laisse-pour-plus-tard-formulaire-contenant-une-liste-déroulante-dentités-filtrées)
+  - [21.8. Exemple de traitement avec CRUD - UPDATE](#218-exemple-de-traitement-avec-crud---update)
+  - [21.9. Bonnes pratiques pour créer de formulaires en Symfony](#219-bonnes-pratiques-pour-créer-de-formulaires-en-symfony)
+  - [21.10. Style de base pour les formulaires (opt - on va utiliser Webpack)](#2110-style-de-base-pour-les-formulaires-opt---on-va-utiliser-webpack)
+  - [21.11. Formulaires concernant plusieurs entités](#2111-formulaires-concernant-plusieurs-entités)
+  - [21.12. (à faire encore, on le laisse pour plus tard) Formulaire contenant une liste déroulante d'entités filtrées](#2112-à-faire-encore-on-le-laisse-pour-plus-tard-formulaire-contenant-une-liste-déroulante-dentités-filtrées)
   - [21.12. Upload de fichiers en utilisant un formulaire](#2112-upload-de-fichiers-en-utilisant-un-formulaire)
     - [21.12.1. Stockage dans le serveur d'une seule image pour chaque entité](#21121-stockage-dans-le-serveur-dune-seule-image-pour-chaque-entité)
     - [21.12.2. Possibles problèmes dans l'upload](#21122-possibles-problèmes-dans-lupload)
@@ -6169,43 +6170,77 @@ Selon les bonnes pratiques de Symfony, **on affiche le form et on le traite dans
 Ce code peut paraitre compliqué mais ce ne l'est pas. 
 
 ```php
-#[Route ("/exemples/formulaires/traitement/exemple/livre", name:"exemple_livre")]
-    
-// dans la même action on réalise le rendu et la réception 
-public function exempleLivre (Request $req){
-    // 1. Création d'une entité vide
-    $livre = new Livre();
+<?php
 
-    // 2. Création du formulaire du type souhaité (pas 'affichage'!)
-    // pour héberger les données de l'entité
-    $formulaireLivre = $this->createForm (LivreType::class, $livre,
-            ['action'=> $this->generateUrl ("exemple_livre"),
-                'method'=>'POST']);
-    
-    
-    // 3. Analyse de l'objet Request du navigateur, remplissage de l'entité
-    $formulaireLivre->handleRequest($req);
-    
-    // 4. Vérification: handleRequest indique qu'on vient d'un submit ou pas? Si on vient d'un submit, handleRequest remplira les données de l'entité avec les données du $_POST (ou $_GET, selon le type de form). Cet état sera enregistré dans l'objet formulaire, et isSubmitted renverra TRUE
-    
-    // si submit et données valides, on entre dans l'if. Les données sont toujours valides si on n'a pas mis des regles de validation (notre cas)
-    if ($formulaireLivre->isSubmitted() && $formulaireLivre->isValid()){
-        // Ici, les données de l'entité seront 'magiquement' remplies
+namespace App\Controller;
 
-        // on peut toujours accèder aux données du form à la main
-        // (utile quand le form contient plus ou moins de champs que l'entité)
-        // $data = $formulaireLivre->getData(); 
-        
-        // Rendu d'une vue où on affiche les données
-        // Normalement on fera CRUD ici, ou une autre opération...
+use App\Entity\Livre;
+use App\Form\LivreType;
 
-        return $this->render ('/exemples_formulaires_traitement/traitement_formulaire_livre.html.twig',
-                            ['livre'=> $livre]);
-    }
-    // si non, on doit juste faire le rendu du formulaire
-    else {
-        return $this->render ('/exemples_formulaires_traitement/affichage_formulaire_livre.html.twig',
-                            ['formulaireLivre'=> $formulaireLivre->createView()]);
+// entité Livre
+use App\Repository\LivreRepository;
+use Doctrine\Persistence\ManagerRegistry;
+// classe du formulaire
+use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+
+class ExemplesFormulairesTraitementController extends AbstractController
+{
+
+    // dans la même action on réalise le rendu et la réception 
+    #[Route("/exemples/formulaires/traitement/exemple/livre", name: "exemple_livre")]
+
+    // dans la même action on réalise le rendu et la réception 
+    public function exempleLivre(Request $req)
+    {
+        // 1. Création d'une entité vide
+        $livre = new Livre();
+
+        // 2. Création du formulaire du type souhaité (pas 'affichage'!)
+        // pour héberger les données de l'entité
+        $formulaireLivre = $this->createForm(
+            LivreType::class,
+            $livre
+            // on n'a pas besoin d'action ni de méthode ici: si un form n'a pas d'action on fait appel à la même page
+            // ,
+            // [
+            //     'action' => $this->generateUrl("exemple_livre"),
+            //     'method' => 'POST'
+            // ]
+        );
+
+
+        // 3. Analyse de l'objet Request du navigateur, remplissage de l'entité
+        // Ici, les données de l'entité seront remplies par handleRequest
+        $formulaireLivre->handleRequest($req);
+
+        // 4. Vérification: handleRequest indique qu'on vient d'un submit ou pas? Si on vient d'un submit, handleRequest remplira les données de l'entité avec les données du $_POST (ou $_GET, selon le type de form). Cet état sera enregistré dans l'objet formulaire, et isSubmitted renverra TRUE
+
+        // si submit et données valides, on entre dans l'if. Les données sont toujours valides si on n'a pas mis des regles de validation (notre cas)
+        if ($formulaireLivre->isSubmitted() && $formulaireLivre->isValid()) {
+
+            // on peut toujours accèder aux données du form à la main
+            // (utile quand le form contient plus ou moins de champs que l'entité)
+            // $data = $formulaireLivre->getData(); 
+
+            // Rendu d'une vue où on affiche les données
+            // Normalement on fera CRUD ici, ou une autre opération...
+
+            return $this->render(
+                '/exemples_formulaires_traitement/traitement_formulaire_livre.html.twig',
+                ['livre' => $livre]
+            );
+        }
+        // si non, on doit juste faire le rendu du formulaire
+        else {
+            return $this->render(
+                '/exemples_formulaires_traitement/affichage_formulaire_livre.html.twig',
+                ['formulaireLivre' => $formulaireLivre->createView()]
+            );
+        }
     }
 }
 
@@ -6376,9 +6411,6 @@ public function rajouterLivre(Request $req, ManagerRegistry $doctrine)
 
 
 
-
-
-
 ### Exercice : 
 
 1. Créez un formulaire pour stocker un aeroport
@@ -6386,10 +6418,115 @@ public function rajouterLivre(Request $req, ManagerRegistry $doctrine)
 2. Créez une entité *Client* (probablement elle existe déjà dans votre projet). Créez un formulaire et testez-le avec une action et une vue.
 
 
+## 21.8. Exemple de traitement avec CRUD - UPDATE
+
+Nous avons une action qui génére une liste de Livres. Quand on clique sur un Livre on verra les détails du Livre sous la forme d'un form. On peut éditer le form et les données seront stockées.
+
+1. D'abord on fait l'action qui affiche tous les livres:
+
+**Important:** Notez qu'on injecte un repo, pour simplifier son obtention
+
+```php
+class ExemplesFormCrudUpdateController extends AbstractController
+{
+    #[Route('/liste/livres', name: 'liste_livres')]
+    public function listeLivres(LivreRepository $rep): Response
+    {
+        $livres = $rep->findAll();
+        $vars = ['livres' => $livres];
+        return $this->render('exemples_form_crud_update/liste_livres.html.twig', $vars);
+    }
+}
+```
+ et sa vue:
+
+ ```twig
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello ExemplesFormCRUDUpdateController!{% endblock %}
+
+{% block body %}
+
+<h1>Liste Livres</h1>
+{% for livre in livres %}
+    <br>{{ livre.titre}}
+    <br>{{ livre.prix }}
+    {# etc... #}
+    
+    {# lien pour l'update #}
+    <br><a href ="{{ path ('livre_update', { id: livre.id } )}}">Update</a>
+{% endfor %}
+
+{% endblock %}
+ ```
+
+
+2. Puis on crée l'actioon pour faire l'update
+
+**IMPORTANT**: Notez qu'on injecte un Livre 
+```php
+    #[Route('/livre/update/{id}', name: 'livre_update')]
+    public function listeUpdate(Livre $livre, ManagerRegistry $doctrine, Request $req): Response
+    {
+        // il suffit d'envoyer l'id dans l'URL et d'injecter un objet Livre.
+        // Symfony (ParamConverter) obtient le repo et fait un findBy (id)
+
+        // $livre = new Livre(); cette fois notre entité n'est pas vide. On la reçcoit pour pré-remplir le form
+
+        // 2. Création du formulaire du type souhaité (pas 'affichage'!)
+        // pour héberger les données de l'entité
+        $formulaireLivre = $this->createForm(
+            LivreType::class,
+            $livre // voici le pré-remplissage
+        );
+
+        // 3. Analyse de l'objet Request du navigateur, remplissage de l'entité
+        $formulaireLivre->handleRequest($req);
+
+        // 4. Vérification: handleRequest indique qu'on vient d'un submit ou pas? Si on vient d'un submit, handleRequest remplira les données de l'entité avec les données du $_POST (ou $_GET, selon le type de form). Cet état sera enregistré dans l'objet formulaire, et isSubmitted renverra TRUE
+
+        // si submit et données valides, on entre dans l'if. Les données sont toujours valides si on n'a pas mis des regles de validation (notre cas)
+        if ($formulaireLivre->isSubmitted() && $formulaireLivre->isValid()) {
+            // on peut toujours accèder aux données du form à la main
+            // (utile quand le form contient plus ou moins de champs que l'entité)
+            // $data = $formulaireLivre->getData(); 
+
+            // On va faire un CRUD pour mettre à jour l'entité, puis une rédirection à la liste de Livres
+            $em = $doctrine->getManager();
+            $em->persist($livre);
+            $em->flush();
+
+            return $this->redirectToRoute('liste_livres');
+
+
+            // return $this->render(
+            //     '/exemples_formulaires_traitement/traitement_formulaire_livre.html.twig',
+            //     ['livre' => $livre]
+            // );
+        }
+        // si votre formulaire n'est pas correct, vous n'entrerez pas dans l'if précédent
+        // afficher les possibles erreurs en utilisant dd ($form->getErrors())
+
+        // si non, on doit juste faire le rendu du formulaire
+        else {
+            return $this->render(
+                '/exemples_formulaires_traitement/affichage_formulaire_livre.html.twig',
+                ['formulaireLivre' => $formulaireLivre->createView()]
+            );
+        }
+    }
+
+```
+
+
+
+
+
+
 
 <br>
 
-## 21.8. Bonnes pratiques pour créer de formulaires en Symfony
+## 21.9. Bonnes pratiques pour créer de formulaires en Symfony
 
 <br>
 
@@ -6423,7 +6560,7 @@ b) Les définir dans le twig dans **form_start**
 <br>
 
 
-## 21.9. Style de base pour les formulaires (opt - on va utiliser Webpack)
+## 21.10. Style de base pour les formulaires (opt - on va utiliser Webpack)
 
 Vous pouvez appliquer du style aux formulaires en utilisant du CSS. Symfony inclut plusieurs templates. Plus d'information ici :
 
@@ -6437,7 +6574,7 @@ Nous verrons plus sur le style dans la section de Webpack-Encore, mais vous pouv
 
 <br>
 
-## 21.10. Formulaires concernant plusieurs entités
+## 21.11. Formulaires concernant plusieurs entités
 
 
 Considérons que les Genres sont aussi des entités de la BD (un **Genre** ayant *nom* et *description*). Comment faire si on veut créer un formulaire pour insérer un livre et choisir au même temps son genre dans le formulaire ? Le genre est un objet (entité) !
@@ -6573,7 +6710,7 @@ $builder->add('users', EntityType::class, [
 ```
 
 
-## 21.11. (à faire encore, on le laisse pour plus tard) Formulaire contenant une liste déroulante d'entités filtrées
+## 21.12. (à faire encore, on le laisse pour plus tard) Formulaire contenant une liste déroulante d'entités filtrées
 
 **Note:**: pour réaliser cet exemple vous devez savoir créer d'abord un **User** en utilisant le système de sécurité de Symfony.
 
