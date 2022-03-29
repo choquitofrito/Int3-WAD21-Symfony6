@@ -156,3 +156,10 @@ On peut modifier ces variables dans l'interface de Heroku aussi. **Ces variables
 D'ailleurs on aura besoin uniquement d'un fichier **env.local** contenant nos variables pour lancer le projet en local
 (à nous de le créer, même si c'est une simple copie du **.env**). Nous n'avons pas besoin d'un fichier **.env** si on définit tous nos variables dans Heroku.
 
+## Cache
+
+Pour effacer la cache de l'application, ouvrez un bash dans le serveur et lancez :
+
+```console
+php bin/console cache:pool:clear cache.global_clearer
+```
