@@ -40,14 +40,17 @@ class CommandeController extends AbstractController
 
             // Créer un détail vide
             $detailBD = new DetailCommande();
-            // Affecter la commande du détail
-            $detailBD->setCommande($commandeBD);
-    
+            
             // obtenir le produit de la BD à nouveau, sans aucun lien avec les autres entités du panier
             $produit = $doctrine->getRepository(Produit::class)->find($detail->getProduit()->getId());
             
-            // Affecter le produit du détail
-            $detailBD->setProduit($produit);
+            // Rajouter du côté 1, un détail à la liste de produits. Si on fait un set de l'autre côté, on fait le liens dans un seul sens dans le domaine d'objets
+            $produit->addDetail ($detailBD);
+
+            // Affecter la commande du détail
+            $commandeBD->addDetail($detailBD);
+
+
             // Affecter la quantité
             $detailBD->setQuantite($detail->getQuantite());
 
