@@ -70,9 +70,20 @@ class PanierController extends AbstractController
         $panierCommande = $session->get('panierCommande', new Commande()); // si la variable 'panier' n'existe pas, on initialise l'array
 
         $detail = new DetailCommande();
-        $detail->setProduit($repProduit->find($id));
+        
+        // new
+        // rajouter le detail au produit
+        $produit = $repProduit->find($id);
+        
+
+        $produit->addDetail($detail);
+
+        // old
+        // $detail->setProduit($repProduit->find($id));
+
         $detail->setQuantite($quantite); // on fixe ici la quantité, mais quand on fait addDetail l'addition sera faite (regardez le code de addDetail)
 
+        // rajouter le detail à la commande        
         $panierCommande->addDetail($detail);  // regardez le code de addDetail       
 
         $session->set('panierCommande', $panierCommande);

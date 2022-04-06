@@ -16,11 +16,11 @@ class DetailCommande
     #[ORM\Column(type: 'integer', nullable: true)]
     private $quantite;
 
-    #[ORM\ManyToOne(targetEntity: Commande::class, inversedBy: 'details',cascade: ['persist', 'remove'])]
+    #[ORM\ManyToOne(targetEntity: Commande::class, inversedBy: 'details')]
     #[ORM\JoinColumn(nullable: false)]
     private $commande;
 
-    #[ORM\ManyToOne(targetEntity: Produit::class, inversedBy: 'detailsCommande',cascade: ['persist', 'remove'])]
+    #[ORM\ManyToOne(targetEntity: Produit::class, inversedBy: 'detailsCommande')]
     #[ORM\JoinColumn(nullable: false)]
     private $produit;
 
